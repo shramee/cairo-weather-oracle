@@ -20,7 +20,7 @@ struct Weather {
 
 // Define a storage variable.
 @storage_var
-func _weather( locationKey: felt ) -> Weather {
+func _weather( locationKey: felt ) -> ( weather: Weather ) {
 }
 
 // Increases the balance by the given amount.
@@ -40,6 +40,6 @@ func get_weather{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     range_check_ptr,
-}(LocationKey: felt) -> Weather {
+}(LocationKey: felt) -> ( weather: Weather ) {
     return _weather.read(LocationKey);
 }
