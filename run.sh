@@ -15,14 +15,18 @@ echo -e $HORIZONTAL_RULE
 deploy_compiled_contract() {
 	if [ $1 ]
 		then
-		echo "Declaring class..."
+		echo "Declaring class for $1..."
 
-		DECLARED=$(starknet declare --contract ./build/my-contract_compiled.json --max_fee $MAX_FEE)
+		DECLARED=$(starknet declare --contract $1 --max_fee $MAX_FEE)
 		echo "$DECLARED"
 
 		CLASS_HASH=`echo "$DECLARED" | grep class | sed "s/Contract class hash: //"`
 
+		# Sleep for 2 seconds
+		sleep 2
+
 		echo "Deploying contract for class $CLASS_HASH..."
+
 		DEPLOYED=`starknet deploy --class_hash $CLASS_HASH --max_fee $MAX_FEE`
 
 		echo "$DEPLOYED"
@@ -37,15 +41,16 @@ case $_SCRIPT in
 
 # Add your custom scripts here
 	
-	"my_script") # This line begins script `my_script`
-		# Shell commands here
-		echo "This script doesn't do very much at the moment."
+	"my") # This line begins script `my_script`
+		find / -type d -name 'starkware'
+		# ls /tmp/cairo_libs
 	;; # Don't forget double semicolon `;;` to end script
 
 
 # Here are some example scripts, edit away as you please.
 
 	"test")
+	
 		# Compile src/test.cairo to build/test_compiled.json
 		cairo-compile ./src/test.cairo --output ./build/test_compiled.json
 

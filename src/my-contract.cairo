@@ -2,6 +2,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
+from shramee.adminsManager import authManager, constructor, addAccountToRole
 
 // metric units wherever applicable
 struct Weather {
@@ -30,6 +31,7 @@ func set_weather{
     pedersen_ptr: HashBuiltin*,
     range_check_ptr,
 }(weather: Weather) {
+    authManager.assert_role( 'admin' );
     _weather.write( weather.LocationKey, weather );
     return ();
 }
