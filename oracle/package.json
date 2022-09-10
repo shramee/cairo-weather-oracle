@@ -1,0 +1,16 @@
+{
+  "name": "accuweather-starknet-oracle",
+  "version": "1.0.0",
+  "description": "Calls a contract to push accuweather data to Starknet.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^3.2.10",
+    "starknet": "^4.5.0"
+  }
+}
