@@ -1,6 +1,5 @@
 services:
   cairo:
-    container_name: cairo
     build: .
     environment:
       - RUN_SCRIPT=${RUN_SCRIPT:-test}
@@ -9,12 +8,17 @@ services:
     ports:
       - "8100:8100"
     volumes:
+      # Code directories
       - ./src:/code/src
+      - ./libs:/code/libs
+      # Builds
       - ./build:/code/build
+      # Logs and config
       - ./logs:/code/logs
       - ./.starknet_accounts:/root/.starknet_accounts
-      - ./cairo_libs:/code/cairo_libs
-      - ./run.sh:/code/scripts/run.sh
-    command: sh -c "chmod +x ./scripts/run.sh && ./scripts/run.sh | tee -a ./logs/scripts.log"
+      # Scripts
+      - ./scripts.sh:/code/scripts.sh
+      - ./run.sh:/code/run.sh
+    command: sh -c "chmod -R +x ./scripts.sh ./run.sh && ./run.sh"
 volumes:
   logvolume01: {}
