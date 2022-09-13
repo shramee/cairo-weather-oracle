@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
-import dummyWeather from "./weather";
-import { stark } from "starknet";
+import dummyWeather from "./weather.js";
+import { contract } from "./starknet.js";
+
+const env = "test"; // test or live
 
 class WeatherManager {
   // Config
@@ -13,9 +15,13 @@ class WeatherManager {
 
   constructor(apikeys) {
     this.apikeys = apikeys.split("|"); // Cycles through API keys separated by a | (pipe)
-
-    setInterval(() => this.processLocations(), 4 * 60 * 60 * 1000);
-    this.processLocation(this.locations[0]);
+    switch (env) {
+      case "test":
+        this.processLocation(this.locations[0]);
+        break;
+      default:
+        setInterval(() => this.processLocations(), 4 * 60 * 60 * 1000);
+    }
   }
 
   getApiKey() {
@@ -49,6 +55,7 @@ class WeatherManager {
   }
 
   locationMakeWeatherStruct(weather) {
+    console.log(weather);
     return {};
   }
 

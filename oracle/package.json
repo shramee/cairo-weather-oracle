@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node ."
+    "start": "node --experimental-json-modules ."
   },
   "author": "",
   "license": "ISC",
