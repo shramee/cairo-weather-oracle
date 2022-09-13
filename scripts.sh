@@ -1,4 +1,7 @@
 #!/bin/sh
+
+OWNER=0x390595e0f30299328f610c689fcff5b0ee48ee971f0742b5568e5dd1de6e324
+
 case $RUN_SCRIPT in
 # Add your custom scripts here
 	
@@ -20,6 +23,12 @@ case $RUN_SCRIPT in
 		--print_info --relocate_prints --layout=small
 	;;
 
+	"contract_compile")
+		starknet-compile ./src/my-contract.cairo \
+		--output ./build/my-contract.json \
+		--abi ./build/my-contract_abi.json
+	;;
+
 	"contract")
 
 		starknet-compile ./src/my-contract.cairo \
@@ -28,7 +37,10 @@ case $RUN_SCRIPT in
 
 		# deploy_compiled_contract is a custom function to declare a class from a file
 		# and then deploy a contract based on the class hash.
-		deploy_compiled_contract ./build/my-contract.json
+		deploy_compiled_contract ./build/my-contract.json $OWNER
+		starknet deploy --max_fee $MAX_FEE \
+			--class_hash 0x06286b3b3d7605f1f45132eb083b03a3f32a9ad5d4a5386a4de94293cbc5a6e2 \
+			--inputs $OWNER
 	;;
 
 	"deploy_account")
