@@ -3,10 +3,29 @@ import fs from 'fs';
 import dummyWeather from "./weather.json" assert {type: 'json'};
 import { structMembers, contract_address } from './contract-data.js';
 import { exec } from 'child_process';
+import { number } from 'starknet';
+import StarknetBulkInvoke from './starknet-bulk-invoker.js';
+
+function asciiToFelt(str) {
+	if (typeof str === 'number') return str;
+	var arr1 = [];
+	arr1.push("0x");
+	for (var n = 0, l = str.length; n < l; n++) {
+		var hex = Number(str.charCodeAt(n)).toString(16);
+		arr1.push(hex);
+	}
+	return number.toFelt(arr1.join(""));
+}
 
 class WeatherManager {
 	// Config
-	locations = [226396, 90909];
+	locations = [
+		'2349_poi', // Bora Bora, French polynesia
+		226396, // Tokyo, Japan
+		242937, // - Walvis Bay, Namibia
+		328533, // - Cannich, UK
+		56861, // - Destruction Bay, Canada
+	];
 	contractAddress = "";
 
 	lastApikeyIndex = 0;
@@ -39,7 +58,7 @@ class WeatherManager {
 		};
 
 		const multiplier = (_unitConversionMultiplier[to] && _unitConversionMultiplier[to][from]) || 1
-		return value * multiplier;
+		return Math.round(value * multiplier);
 	}
 
 	constructor(apikeys) {
@@ -67,33 +86,40 @@ class WeatherManager {
 			.catch((e) => console.log(e));
 	}
 
-	processLocations() {
-		this.locations.forEach(async (location) => {
-			await this.processLocation(location);
-		});
+	async processLocations() {
+		const invokeCommands = [];
+
+		for (let i = 0; i < this.locations.length; i++) {
+			const location = this.locations[i];
+			invokeCommands.push( await this.processLocation(location) );
+		}
+
+		new StarknetBulkInvoke( invokeCommands );
 	}
 
 	async processLocation(location) {
-		console.log( 'Doing location ' + location )
-		return;
 		this.processingLocation = location;
-		const weather = dummyWeather || (await this.getLocationWeather(location));
+		let weather = await this.getLocationWeather(location);
+
+		if (!weather) {
+			return console.error(`Couldn't find data for location ${location}`);
+		}
+
+		if (weather.length) {
+			weather = weather[0]
+		}
+
+		if (!weather.WeatherText) {
+			return console.error(`Unrecognised data for location ${location}`, weather);
+		}
+
+		console.log(`Processing location ${location} - ${asciiToFelt(location)}`);
+
 		const structArgs = this.locationMakeWeatherStruct(weather);
-		console.log('Ready to deploy, ', structArgs);
-		exec(
-			'starknet invoke ' +
-			'--address ' + contract_address + ' ' +
-			'--abi abi.json ' +
-			'--function setWeather ' +
-			'--inputs ' + structArgs.join(' '),
-			(err, stdout, stderr) => {
-				if (err) {
-					console.log(err)
-				} else {
-					console.log(`The stdout Buffer from shell: \n ${stdout.toString()}`)
-				}
-			}
-		);
+
+		const contract_func_args = `--address ${contract_address} --abi abi.json --function setWeather`;
+
+		return `starknet invoke ${contract_func_args} --inputs ${structArgs.join(' ')}`;
 	}
 
 	/**
@@ -105,7 +131,7 @@ class WeatherManager {
 		let value = keyDotNot.split('.').reduce((o, i) => o[i], weatherOb);
 
 		if ('LocationKey' === keyDotNot) {
-			return this.processingLocation;
+			return asciiToFelt(this.processingLocation);
 		}
 		if (value && value.Metric) {
 			//{ Value: 29, Unit: 'C', UnitType: 17 } mC
@@ -116,10 +142,6 @@ class WeatherManager {
 	}
 
 	locationMakeWeatherStruct(weather) {
-		if (weather.length) {
-			weather = weather[0]
-		}
-
 		const structDataArray = [];
 
 		const structKeyMaps = {
