@@ -7,9 +7,10 @@ from shramee.adminsManager import authManager, constructor, addAccountToRole
 // metric units wherever applicable
 struct Weather {
     LocationKey: felt, // Accuweather location key
+    EpochTime: felt,
     Temperature_mC: felt, // microCelsius (1000mC = 1C)
     WeatherIcon: felt, // Accuweather icon ID (for classification)
-    Humidty: felt,
+    Humidity: felt,
     WindDirection_deg: felt, // degrees
     WindSpeed_m_h: felt, // meter/hour ( 1000m/h = 1km/h )
     CloudCover: felt,
@@ -26,19 +27,19 @@ func _weather( locationKey: felt ) -> ( weather: Weather ) {
 
 // Increases the balance by the given amount.
 @external
-func set_weather{
+func setWeather{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     range_check_ptr,
 }(weather: Weather) {
-    authManager.assert_role( 'admin' );
+    authManager.assertRole( 'admin' );
     _weather.write( weather.LocationKey, weather );
     return ();
 }
 
 // Returns the current balance.
 @view
-func get_weather{
+func getWeather{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     range_check_ptr,

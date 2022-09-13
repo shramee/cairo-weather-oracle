@@ -84,7 +84,7 @@ class WeatherManager {
 			'starknet invoke ' +
 			'--address ' + contract_address + ' ' +
 			'--abi abi.json ' +
-			'--function set_weather ' +
+			'--function setWeather ' +
 			'--inputs ' + structArgs.join(' '),
 			(err, stdout, stderr) => {
 				if (err) {
