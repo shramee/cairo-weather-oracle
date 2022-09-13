@@ -1,9 +1,9 @@
 import fetch from "node-fetch";
 import fs from 'fs';
 import dummyWeather from "./weather.json" assert {type: 'json'};
-import { account, contract, structMembers } from "./starknet.js";
+import { structMembers, contract_address } from './contract-data.js';
+import { exec } from 'child_process';
 
-const env = "test"; // test or live
 class WeatherManager {
 	// Config
 	locations = [226396, 90909];
@@ -44,13 +44,8 @@ class WeatherManager {
 
 	constructor(apikeys) {
 		this.apikeys = apikeys.split("|"); // Cycles through API keys separated by a | (pipe)
-		switch (env) {
-			case "test":
-				this.processLocation(this.locations[0]);
-				break;
-			default:
-				setInterval(() => this.processLocations(), 4 * 60 * 60 * 1000);
-		}
+		this.processLocations();
+		setInterval(() => this.processLocations(), 60 * 60 * 4 * 1000);
 	}
 
 	getApiKey() {
@@ -79,11 +74,26 @@ class WeatherManager {
 	}
 
 	async processLocation(location) {
+		console.log( 'Doing location ' + location )
+		return;
 		this.processingLocation = location;
 		const weather = dummyWeather || (await this.getLocationWeather(location));
 		const structArgs = this.locationMakeWeatherStruct(weather);
-		// const resp = await contract.set_weather( structArgs );
-		console.log(await account.getNonce());
+		console.log('Ready to deploy, ', structArgs);
+		exec(
+			'starknet invoke ' +
+			'--address ' + contract_address + ' ' +
+			'--abi abi.json ' +
+			'--function set_weather ' +
+			'--inputs ' + structArgs.join(' '),
+			(err, stdout, stderr) => {
+				if (err) {
+					console.log(err)
+				} else {
+					console.log(`The stdout Buffer from shell: \n ${stdout.toString()}`)
+				}
+			}
+		);
 	}
 
 	/**
@@ -137,5 +147,3 @@ class WeatherManager {
 const weatherMan = new WeatherManager(
 	process.env.accuweather_apikey || "CTUI1gMAe0U9XNAXGEJRzGVFhqAAsj8M"
 );
-
-// http://dataservice.accuweather.com/currentconditions/v1/226396?apikey=CTUI1gMAe0U9XNAXGEJRzGVFhqAAsj8M&details=true"
