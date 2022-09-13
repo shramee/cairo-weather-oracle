@@ -20,5 +20,14 @@ services:
       - ./scripts.sh:/code/scripts.sh
       - ./run.sh:/code/run.sh
     command: sh -c "chmod -R +x ./scripts.sh ./run.sh && ./run.sh"
+  oracle:
+    build: ./oracle
+    profiles:
+      - oracle
+    volumes:
+      # Code directories
+      - ./.starknet_accounts:/root/.starknet_accounts
+      - ./oracle:/code/oracle
+    command: sh -c "cd /code/oracle;npm start"
 volumes:
   logvolume01: {}
