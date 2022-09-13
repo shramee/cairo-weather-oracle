@@ -64,8 +64,6 @@ export default class StarknetBulkInvoke {
 	async processInvoke(invokeCommands, index = 0) {
 		const cmd = invokeCommands[index];
 		const resp = await execPromise(cmd);
-		console.log(cmd);
-		console.log(resp);
 		if (resp.indexOf('Invoke transaction was sent.') > -1) {
 			const txHash = resp
 				.split('\n')
@@ -74,6 +72,8 @@ export default class StarknetBulkInvoke {
 				.split(/: ?/)[1];
 			this.checkInvokeTxnStatus(invokeCommands, txHash, index = 0)
 		} else {
+			console.log(cmd);
+			console.log(resp);
 			index++;
 			if (index < invokeCommands.length) {
 				this.processInvoke(invokeCommands, index)
@@ -97,7 +97,6 @@ export default class StarknetBulkInvoke {
 
 	async checkInvokeTxnStatus(invokeCommands, txHash, index) {
 		const cmd = invokeCommands[index];
-		console.log(`Waiting for ${txHash}.`);
 		let timesChecked = 1;
 		let status = await this.txStatus(txHash);
 		while (status.indexOf('RECEIVED')) {
@@ -120,6 +119,5 @@ export default class StarknetBulkInvoke {
 		} else {
 			console.table(this.results);
 		}
-
 	}
 }
