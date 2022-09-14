@@ -10,6 +10,7 @@ function execPromise(command) {
 		exec(
 			command,
 			(err, stdout, stderr) => {
+				console.error(err);
 				err ?
 					rej(err) :
 					res(stderr ? stderr : stdout)
@@ -63,16 +64,21 @@ export default class StarknetBulkInvoke {
 
 	async processInvoke(invokeCommands, index = 0) {
 		const cmd = invokeCommands[index];
-		const resp = await execPromise(cmd);
+		console.log(`\n\nProcessing invoke ${index + 1} of ${invokeCommands.length}.`);
+		let resp;
+		try {
+			resp = await execPromise(cmd);
+		} catch(e ) {
+			
+		}
 		if (resp.indexOf('Invoke transaction was sent.') > -1) {
 			const txHash = resp
 				.split('\n')
 				.filter(l => l.includes('Transaction hash:'))
 				.join('')
 				.split(/: ?/)[1];
-			this.checkInvokeTxnStatus(invokeCommands, txHash, index = 0)
+			this.checkInvokeTxnStatus(invokeCommands, txHash, index)
 		} else {
-			console.log(cmd);
 			console.log(resp);
 			index++;
 			if (index < invokeCommands.length) {
@@ -89,35 +95,29 @@ export default class StarknetBulkInvoke {
 		return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 	}
 
-	updatingLog(msg) {
-		readline.clearLine(process.stdout, 0)
-		readline.cursorTo(process.stdout, 0, null)
-		process.stdout.write(msg);
-	}
-
 	async checkInvokeTxnStatus(invokeCommands, txHash, index) {
 		const cmd = invokeCommands[index];
 		let timesChecked = 1;
+		console.log(`Transaction hash: ${txHash}, awaiting resolve...`);
 		let status = await this.txStatus(txHash);
-		while (status.indexOf('RECEIVED')) {
-			this.updatingLog(`Checked ${timesChecked++}... `)
+		while (status.indexOf('"tx_status": "RECEIVED"') > -1) {
 			await this.sleep(60);
 			status = await this.txStatus(txHash);
 		}
-		this.updatingLog(`Checked ${timesChecked}...\n`)
+		console.log(status);
 		const { tx_status, tx_failure_reason } = JSON.parse(status);
-		console.log(`Waiting for ${txHash}.`);
 
 		if (tx_failure_reason) {
-			this.results.push({ tx_Hash, tx_status, tx_failure_reason, cmd, });
+			this.results.push({ txHash, tx_status, tx_failure_reason, cmd, });
 		} else {
-			this.results.push({ tx_Hash, tx_status, cmd, });
+			this.results.push({ txHash, tx_status, cmd, });
 		}
 		index++;
+		console.log(invokeCommands.length, index);
 		if (index < invokeCommands.length) {
 			this.processInvoke(invokeCommands, index)
 		} else {
-			console.table(this.results);
+			console.log(this.results);
 		}
 	}
 }

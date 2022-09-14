@@ -5,6 +5,10 @@ import { structMembers, contract_address } from './contract-data.js';
 import { exec } from 'child_process';
 import { number } from 'starknet';
 import StarknetBulkInvoke from './starknet-bulk-invoker.js';
+import util from 'util';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function asciiToFelt(str) {
 	if (typeof str === 'number') return str;
@@ -16,6 +20,17 @@ function asciiToFelt(str) {
 	}
 	return number.toFelt(arr1.join(""));
 }
+
+// Overload console log, yay!
+var log_file = fs.createWriteStream(__dirname + '/debug.log', {flags : 'r+'});
+var log_stdout = process.stdout;
+
+log_file.write(`\n${'_'.repeat(70)}\n${new Date()}`);
+
+console.log = function(d) { //
+  log_file.write(util.format(d) + '\n');
+  log_stdout.write(util.format(d) + '\n');
+};
 
 class WeatherManager {
 	// Config
@@ -167,5 +182,5 @@ class WeatherManager {
 }
 
 const weatherMan = new WeatherManager(
-	process.env.accuweather_apikey || "CTUI1gMAe0U9XNAXGEJRzGVFhqAAsj8M"
+	process.env.accuweather_apikey || "5yN1ct0LbsZOf7CObiHKbRBqAGr0AO0C"
 );
